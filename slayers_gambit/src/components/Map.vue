@@ -114,6 +114,8 @@ function generateMap(minLevels: number) {
   for (let l = 0; l < levels.length - 1; l++) {
     const curr = levels[l]
     const next = levels[l + 1]
+
+    // Track which nodes in next level are still unconnected
     const unconnectedNext = new Set(next.map((n) => n.id))
 
     curr.forEach((node) => {
@@ -131,6 +133,7 @@ function generateMap(minLevels: number) {
       const numConnections = Math.min(Math.floor(Math.random() * 3) + 1, sorted.length)
       const targets: number[] = []
 
+      // Pick unconnected nodes first
       for (let n of sorted) {
         if (unconnectedNext.has(n.id)) {
           targets.push(n.id)
@@ -139,14 +142,27 @@ function generateMap(minLevels: number) {
         }
       }
 
+      // Fill remaining connections randomly if needed
       if (targets.length < numConnections) {
         sorted.forEach((n) => {
-          if (!targets.includes(n.id) && targets.length < numConnections) targets.push(n.id)
+          if (!targets.includes(n.id) && targets.length < numConnections) {
+            targets.push(n.id)
+            unconnectedNext.delete(n.id) // make sure we don't leave it
+          }
         })
       }
 
       node.connections = targets
     })
+
+    // Finally, ensure any leftover nodes are connected
+    if (unconnectedNext.size > 0) {
+      unconnectedNext.forEach((nid) => {
+        // Connect it to a random node from the previous level
+        const randParent = curr[Math.floor(Math.random() * curr.length)]
+        randParent.connections.push(nid)
+      })
+    }
   }
 
   // Positions
