@@ -179,13 +179,23 @@ const mapWidth = computed(() => {
 
 const mapHeight = computed(() => maxWidth * nodeSpacing + 120)
 
+const emit = defineEmits<{
+  (e: 'node-click', node: { type: string; id: number }): void
+}>()
+
 // Click handler
 function handleNodeClick(node: Node) {
   const activeNode = getNodeById(activeNodeId.value)
   if (!activeNode) return
+
   // Only allow clicking nodes in next column connected to active node
   if (node.level === activeNode.level + 1 && activeNode.connections.includes(node.id)) {
     activeNodeId.value = node.id
+
+    // Emit to parent for special nodes
+    if (['enemy', 'elite', 'boss', 'event'].includes(node.type)) {
+      emit('node-click', { type: node.type, id: node.id })
+    }
   }
 }
 
@@ -280,7 +290,7 @@ function isNodeInactive(node: Node) {
   z-index: 10;
 }
 .map-node.active {
-  border-color: #48bb78 !important;
+  border-color: purple !important;
 }
 .map-node.inactive {
   opacity: 0.3;
