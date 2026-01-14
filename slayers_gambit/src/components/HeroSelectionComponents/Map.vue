@@ -14,7 +14,7 @@ interface Node {
 }
 
 const props = defineProps<{
-  length: number // minimum number of normal levels before boss
+  length: number
   maxWidth?: number
 }>()
 
@@ -25,15 +25,18 @@ const nodeSize = 50
 
 const mapNodes = ref<Node[]>([])
 
-// Weighted random for node types
+// Active node starts at start
+const activeNodeId = ref(0)
+
+// Weighted random node type
 function randomNodeType(): NodeType {
   const rand = Math.random()
-  if (rand < 0.5) return 'enemy' // 50%
-  if (rand < 0.7) return 'elite' // 20%
-  return 'event' // 30%
+  if (rand < 0.5) return 'enemy'
+  if (rand < 0.7) return 'elite'
+  return 'event'
 }
 
-// Emoji for each node type
+// Emoji for each node
 function getNodeSymbol(type: NodeType) {
   switch (type) {
     case 'enemy':
@@ -49,15 +52,17 @@ function getNodeSymbol(type: NodeType) {
   }
 }
 
+// Get node by id
 function getNodeById(id: number): Node | undefined {
   return mapNodes.value.find((n) => n.id === id)
 }
 
+// Generate map
 function generateMap(minLevels: number) {
   const nodes: Node[] = []
   let idCounter = 0
 
-  // First column: START node
+  // Start node
   nodes.push({
     id: idCounter++,
     type: 'start',
@@ -68,9 +73,9 @@ function generateMap(minLevels: number) {
     connections: [],
   })
 
-  // Create normal levels (shifted by 1 because start node is level 0)
+  // Normal levels
   for (let lvl = 1; lvl <= minLevels; lvl++) {
-    const numNodes = Math.floor(Math.random() * 3) + 2 // 2–4 nodes per level
+    const numNodes = Math.floor(Math.random() * 3) + 2
     for (let col = 0; col < numNodes; col++) {
       nodes.push({
         id: idCounter++,
@@ -84,7 +89,7 @@ function generateMap(minLevels: number) {
     }
   }
 
-  // Boss node at last level
+  // Boss node
   const bossCol = Math.floor(maxWidth / 2)
   nodes.push({
     id: idCounter,
@@ -96,37 +101,61 @@ function generateMap(minLevels: number) {
     connections: [],
   })
 
-  // Group nodes by level
+  // Group by level
   const levels = nodes.reduce((acc: Node[][], node) => {
     if (!acc[node.level]) acc[node.level] = []
     acc[node.level].push(node)
     return acc
   }, [])
 
-  // Connect nodes: 1–3 per node in next level, prefer nearby columns
+  // Connect nodes
   for (let l = 0; l < levels.length - 1; l++) {
     const curr = levels[l]
     const next = levels[l + 1]
 
+    // Track which nodes in the next level are still unconnected
+    const unconnectedNext = new Set(next.map((n) => n.id))
+
     curr.forEach((node) => {
-      // If start node, connect to all first-level nodes
       if (node.type === 'start') {
         node.connections = next.map((n) => n.id)
+        next.forEach((n) => unconnectedNext.delete(n.id))
         return
       }
 
-      // sort next-level nodes by column distance
       const sorted = next
         .map((n) => ({ node: n, dist: Math.abs(n.col - node.col) }))
         .sort((a, b) => a.dist - b.dist)
         .map((c) => c.node)
 
+      // Number of connections from this node
       const numConnections = Math.min(Math.floor(Math.random() * 3) + 1, sorted.length)
-      node.connections = sorted.slice(0, numConnections).map((n) => n.id)
+
+      // Pick nodes that are unconnected first
+      const targets: number[] = []
+
+      for (let n of sorted) {
+        if (unconnectedNext.has(n.id)) {
+          targets.push(n.id)
+          unconnectedNext.delete(n.id)
+          if (targets.length >= numConnections) break
+        }
+      }
+
+      // Fill remaining connections randomly if needed
+      if (targets.length < numConnections) {
+        sorted.forEach((n) => {
+          if (!targets.includes(n.id) && targets.length < numConnections) {
+            targets.push(n.id)
+          }
+        })
+      }
+
+      node.connections = targets
     })
   }
 
-  // Calculate positions for display
+  // Calculate positions
   levels.forEach((levelNodes, l) => {
     const count = levelNodes.length
     const startY = ((maxWidth - count) / 2) * nodeSpacing + 40
@@ -149,6 +178,33 @@ const mapWidth = computed(() => {
 })
 
 const mapHeight = computed(() => maxWidth * nodeSpacing + 120)
+
+// Click handler
+function handleNodeClick(node: Node) {
+  const activeNode = getNodeById(activeNodeId.value)
+  if (!activeNode) return
+  // Only allow clicking nodes in next column connected to active node
+  if (node.level === activeNode.level + 1 && activeNode.connections.includes(node.id)) {
+    activeNodeId.value = node.id
+  }
+}
+
+// Node is grayed out if it's behind the active node OR in the next column but not connected
+function isNodeInactive(node: Node) {
+  const activeNode = getNodeById(activeNodeId.value)
+  if (!activeNode) return true
+
+  // Nodes behind active node (previous levels)
+  if (node.level < activeNode.level) return true
+
+  // Nodes in next level but not connected
+  if (node.level === activeNode.level + 1 && !activeNode.connections.includes(node.id)) return true
+
+  // Nodes in the same level as active node (current column) are now inactive too
+  if (node.level === activeNode.level && node.id !== activeNode.id) return true
+
+  return false
+}
 </script>
 
 <template>
@@ -174,8 +230,9 @@ const mapHeight = computed(() => maxWidth * nodeSpacing + 120)
         v-for="node in mapNodes"
         :key="node.id"
         class="map-node"
-        :class="node.type"
+        :class="[node.type, { active: node.id === activeNodeId, inactive: isNodeInactive(node) }]"
         :style="{ left: node.posX + 'px', top: node.posY + 'px' }"
+        @click="handleNodeClick(node)"
       >
         {{ getNodeSymbol(node.type) }}
       </div>
@@ -221,6 +278,13 @@ const mapHeight = computed(() => maxWidth * nodeSpacing + 120)
 .map-node:hover {
   transform: scale(1.15);
   z-index: 10;
+}
+.map-node.active {
+  border-color: #48bb78 !important;
+}
+.map-node.inactive {
+  opacity: 0.3;
+  pointer-events: none;
 }
 .start {
   background: #3182ce;
