@@ -2,8 +2,8 @@ import { Enemy } from '@/utils/enemies'
 
 export const enemies_low: Enemy[] = [
   {
-    id: 'Kobold',
-    name: 'Kobold',
+    id: 'kobold_miner',
+    name: 'Kobold Miner',
     health: 12,
     resistances: [],
     abilities: [
@@ -15,7 +15,8 @@ export const enemies_low: Enemy[] = [
         damageType: 'Pierce',
         dice: 3,
         roll: {
-          score: 3,
+          specific: true,
+          score: 2,
         },
       },
       {
@@ -24,7 +25,29 @@ export const enemies_low: Enemy[] = [
         dodge: 1,
         dice: 6,
         roll: {
-          score: 6,
+          score: 5,
+        },
+      },
+    ],
+  },
+  {
+    id: 'Brigand',
+    name: 'Brigand',
+    health: 16,
+    resistances: [
+      { damageType: 'Pierce', percantage: 25 },
+      { damageType: 'Slash', percantage: 40 },
+    ],
+    abilities: [
+      {
+        name: 'Axe Swing',
+        tier: 'Low',
+        damageMax: 12,
+        damageMin: 1,
+        damageType: 'Slash',
+        dice: 6,
+        roll: {
+          score: 4,
         },
       },
     ],

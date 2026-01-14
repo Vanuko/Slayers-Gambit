@@ -34,7 +34,7 @@ const emit = defineEmits<{
 function randomNodeType(): NodeType {
   const rand = Math.random()
   if (rand < 0.5) return 'enemy'
-  if (rand < 0.7) return 'elite'
+  if (rand < 0.6) return 'elite'
   return 'event'
 }
 

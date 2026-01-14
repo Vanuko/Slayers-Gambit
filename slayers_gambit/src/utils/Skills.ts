@@ -1,4 +1,4 @@
-import { DiceType } from './dice'
+import type { DiceType } from './dice'
 
 export type DamageType =
   | 'Slash'
@@ -9,6 +9,11 @@ export type DamageType =
   | 'Thunder'
   | 'Blight'
   | 'Arcane'
+
+export interface Resistance {
+  damageType: DamageType
+  percantage: number
+}
 
 export type Tier = 'Low' | 'Medium' | 'High' | 'Legendary'
 
@@ -21,7 +26,6 @@ export interface DiceRequirement {
 export interface Skill {
   name: string
   requirements: DiceRequirement[]
-  score: number
   damageMin?: number
   damageMax?: number
   healMin?: number
@@ -29,6 +33,9 @@ export interface Skill {
   dodge?: number
   block?: number
   damageType?: DamageType
+  critRequirement?: DiceRequirement[]
+  crit?: string
+  repeat?: number
 }
 
 export interface EnemySkill {
