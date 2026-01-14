@@ -1,5 +1,5 @@
 export interface DiceType {
-  name: 'Power' | 'Strength' | 'Agility' | 'Chaos'
+  name: 'Power' | 'Strength' | 'Agility' | 'Chaos' | 'Chance'
 }
 
 export interface Dice {

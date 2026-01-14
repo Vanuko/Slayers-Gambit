@@ -1,8 +1,18 @@
-import { DiceType } from './Dice'
+import { DiceType } from './dice'
+
+export type DamageType =
+  | 'Slash'
+  | 'Pierce'
+  | 'Bludgeon'
+  | 'Fire'
+  | 'Ice'
+  | 'Thunder'
+  | 'Blight'
+  | 'Arcane'
 
 export interface DiceRequirement {
-  type: DiceType
-  specific: boolean
+  type?: DiceType
+  specific?: boolean
   score: number
 }
 
@@ -14,7 +24,7 @@ export interface Skill {
   heal?: number
   dodge?: number
   block?: number
-  damageType?: 'Slash' | 'Pierce' | 'Bludgeon' | 'Fire' | 'Ice' | 'Thunder' | 'Corrosive' | 'Arcane'
+  damageType?: DamageType
 }
 
 export interface EnemySkill {
@@ -23,5 +33,6 @@ export interface EnemySkill {
   heal?: number
   dodge?: number
   block?: number
-  damageType?: 'Slash' | 'Pierce' | 'Bludgeon' | 'Fire' | 'Ice' | 'Thunder' | 'Corrosive' | 'Arcane'
+  damageType?: DamageType
+  roll: DiceRequirement
 }
