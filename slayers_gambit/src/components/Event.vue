@@ -1,6 +1,4 @@
 <script setup lang="ts">
-const props = defineProps<{}>()
-
 const emit = defineEmits<{
   (e: 'close'): void
 }>()

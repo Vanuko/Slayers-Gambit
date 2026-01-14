@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 type NodeType = 'enemy' | 'elite' | 'event' | 'boss' | 'start'
 
@@ -24,11 +24,13 @@ const levelSpacing = 180
 const nodeSize = 50
 
 const mapNodes = ref<Node[]>([])
-
-// Active node starts at start
 const activeNodeId = ref(0)
 
-// Weighted random node type
+const emit = defineEmits<{
+  (e: 'node-click', node: { type: string; id: number }): void
+}>()
+
+// Random node type
 function randomNodeType(): NodeType {
   const rand = Math.random()
   if (rand < 0.5) return 'enemy'
@@ -36,7 +38,7 @@ function randomNodeType(): NodeType {
   return 'event'
 }
 
-// Emoji for each node
+// Emoji symbols
 function getNodeSymbol(type: NodeType) {
   switch (type) {
     case 'enemy':
@@ -53,7 +55,7 @@ function getNodeSymbol(type: NodeType) {
 }
 
 // Get node by id
-function getNodeById(id: number): Node | undefined {
+function getNodeById(id: number) {
   return mapNodes.value.find((n) => n.id === id)
 }
 
@@ -73,7 +75,7 @@ function generateMap(minLevels: number) {
     connections: [],
   })
 
-  // Normal levels
+  // Normal nodes
   for (let lvl = 1; lvl <= minLevels; lvl++) {
     const numNodes = Math.floor(Math.random() * 3) + 2
     for (let col = 0; col < numNodes; col++) {
@@ -89,7 +91,7 @@ function generateMap(minLevels: number) {
     }
   }
 
-  // Boss node
+  // Boss
   const bossCol = Math.floor(maxWidth / 2)
   nodes.push({
     id: idCounter,
@@ -112,8 +114,6 @@ function generateMap(minLevels: number) {
   for (let l = 0; l < levels.length - 1; l++) {
     const curr = levels[l]
     const next = levels[l + 1]
-
-    // Track which nodes in the next level are still unconnected
     const unconnectedNext = new Set(next.map((n) => n.id))
 
     curr.forEach((node) => {
@@ -128,10 +128,7 @@ function generateMap(minLevels: number) {
         .sort((a, b) => a.dist - b.dist)
         .map((c) => c.node)
 
-      // Number of connections from this node
       const numConnections = Math.min(Math.floor(Math.random() * 3) + 1, sorted.length)
-
-      // Pick nodes that are unconnected first
       const targets: number[] = []
 
       for (let n of sorted) {
@@ -142,12 +139,9 @@ function generateMap(minLevels: number) {
         }
       }
 
-      // Fill remaining connections randomly if needed
       if (targets.length < numConnections) {
         sorted.forEach((n) => {
-          if (!targets.includes(n.id) && targets.length < numConnections) {
-            targets.push(n.id)
-          }
+          if (!targets.includes(n.id) && targets.length < numConnections) targets.push(n.id)
         })
       }
 
@@ -155,7 +149,7 @@ function generateMap(minLevels: number) {
     })
   }
 
-  // Calculate positions
+  // Positions
   levels.forEach((levelNodes, l) => {
     const count = levelNodes.length
     const startY = ((maxWidth - count) / 2) * nodeSpacing + 40
@@ -169,50 +163,39 @@ function generateMap(minLevels: number) {
   return nodes
 }
 
-mapNodes.value = generateMap(props.length)
+// Only generate once
+onMounted(() => {
+  if (mapNodes.value.length === 0) {
+    mapNodes.value = generateMap(props.length)
+  }
+})
 
 // SVG dimensions
 const mapWidth = computed(() => {
   const levelsCount = Math.max(...mapNodes.value.map((n) => n.level)) + 1
   return levelsCount * levelSpacing + 120
 })
-
 const mapHeight = computed(() => maxWidth * nodeSpacing + 120)
-
-const emit = defineEmits<{
-  (e: 'node-click', node: { type: string; id: number }): void
-}>()
 
 // Click handler
 function handleNodeClick(node: Node) {
   const activeNode = getNodeById(activeNodeId.value)
   if (!activeNode) return
 
-  // Only allow clicking nodes in next column connected to active node
   if (node.level === activeNode.level + 1 && activeNode.connections.includes(node.id)) {
     activeNodeId.value = node.id
-
-    // Emit to parent for special nodes
     if (['enemy', 'elite', 'boss', 'event'].includes(node.type)) {
       emit('node-click', { type: node.type, id: node.id })
     }
   }
 }
 
-// Node is grayed out if it's behind the active node OR in the next column but not connected
 function isNodeInactive(node: Node) {
   const activeNode = getNodeById(activeNodeId.value)
   if (!activeNode) return true
-
-  // Nodes behind active node (previous levels)
   if (node.level < activeNode.level) return true
-
-  // Nodes in next level but not connected
   if (node.level === activeNode.level + 1 && !activeNode.connections.includes(node.id)) return true
-
-  // Nodes in the same level as active node (current column) are now inactive too
   if (node.level === activeNode.level && node.id !== activeNode.id) return true
-
   return false
 }
 </script>

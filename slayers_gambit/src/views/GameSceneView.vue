@@ -8,9 +8,13 @@ import { ref, computed } from 'vue'
 const gameStore = useGameStore()
 const selectedHero = computed(() => gameStore.selectedHero)
 
+// Track which view is active: 'map', 'combat', 'event'
 const activeView = ref<'map' | 'combat' | 'event'>('map')
+
+// Store the current node the player clicked
 const currentNode = ref<{ type: string; id: number } | null>(null)
 
+// Handle node clicks from Map
 function onNodeClick(node: { type: string; id: number }) {
   if (['enemy', 'elite', 'boss'].includes(node.type)) {
     currentNode.value = node
@@ -21,7 +25,7 @@ function onNodeClick(node: { type: string; id: number }) {
   }
 }
 
-// Function to return to map
+// Return to map
 function backToMap() {
   currentNode.value = null
   activeView.value = 'map'
@@ -30,11 +34,10 @@ function backToMap() {
 
 <template>
   <main class="game">
-    <!-- <Map v-if="activeView === 'map'" :length="9" @node-click="onNodeClick" /> -->
-    <Map v-if="activeView === 'map'" :length="9" />
-
+    <keep-alive>
+      <Map v-if="activeView === 'map'" :length="9" @node-click="onNodeClick" />
+    </keep-alive>
     <Combat v-if="activeView === 'combat'" @close="backToMap" />
-
     <Event v-if="activeView === 'event'" @close="backToMap" />
   </main>
 </template>
