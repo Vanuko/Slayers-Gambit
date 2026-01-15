@@ -57,8 +57,7 @@ function backToMap() {
       <button @click="openCrafting">Crafting</button>
       <button @click="openCharacter">Character</button>
     </div>
-
-    <Combat v-if="activeView === 'combat'" @close="backToMap" />
+    <Combat v-if="activeView === 'combat'" :hero="selectedHero" @close="backToMap" />
     <Event v-if="activeView === 'event'" @close="backToMap" />
     <Crafting v-if="activeView === 'crafting'" @close="backToMap" />
     <Character v-if="activeView === 'character'" @close="backToMap" />
@@ -66,10 +65,14 @@ function backToMap() {
 </template>
 
 <style scoped>
-.map-actions {
-  display: flex;
-  justify-content: center;
-  margin-top: 16px;
-  gap: 4px;
+.game {
+  height: 100%;
+  width: 100%;
+  .map-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+    gap: 4px;
+  }
 }
 </style>

@@ -35,7 +35,7 @@ export const Young_blood_Items: Item[] = [
         name: 'Flail Swing',
         requirements: [
           {
-            type: 'Power',
+            type: 'Strength',
             score: 4,
           },
         ],
@@ -70,7 +70,7 @@ export const Young_blood_Items: Item[] = [
         name: 'Shield Bash',
         requirements: [
           {
-            type: 'Power',
+            type: 'Strength',
             score: 4,
           },
         ],
@@ -92,7 +92,7 @@ export const Young_blood_Items: Item[] = [
             score: 6,
           },
         ],
-        dodge: 4,
+        dodge: 1,
       },
     ],
   },
