@@ -12,6 +12,7 @@ export interface Item {
   desc: string
   skill: Skill[]
   resistances?: Resistance[]
+  health?: number
 }
 export interface CraftComponent {
   name: string

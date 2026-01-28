@@ -33,8 +33,6 @@ export interface Skill {
   dodge?: number
   block?: number
   damageType?: DamageType
-  critRequirement?: DiceRequirement[]
-  crit?: string
   repeat?: number
 }
 
