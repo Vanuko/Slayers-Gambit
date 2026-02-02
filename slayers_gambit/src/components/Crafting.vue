@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useGameStore } from '@/stores/gameStore'
+import { computed } from 'vue'
+
 const emit = defineEmits<{
   (e: 'close'): void
 }>()
@@ -6,17 +9,23 @@ const emit = defineEmits<{
 function finishCombat() {
   emit('close')
 }
+
+const gameStore = useGameStore()
+const equiped = computed(() => gameStore.equippedItems)
 </script>
 
 <template>
-  <div class="combat-screen">
+  <div class="crafting-screen">
+    <div class="equiped">
+      {{ equiped }}
+    </div>
     <h2>Crafting</h2>
     <button @click="finishCombat">Back to Map</button>
   </div>
 </template>
 
 <style scoped>
-.combat-screen {
+.crafting-screen {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -25,7 +34,9 @@ function finishCombat() {
   border: 2px solid #f00;
   border-radius: 12px;
   padding: 20px;
-  background-color: #ffe5e5;
+
+  .equiped {
+  }
 }
 button {
   margin-top: 20px;
